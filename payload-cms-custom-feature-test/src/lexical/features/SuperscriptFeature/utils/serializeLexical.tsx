@@ -1,22 +1,16 @@
-/* eslint-disable @typescript-eslint/strict-boolean-expressions */
 import type { SerializedListItemNode, SerializedListNode } from '@lexical/list'
 import type { SerializedHeadingNode, SerializedQuoteNode } from '@lexical/rich-text'
-import type { LinkFields, SerializedLinkNode } from '@payloadcms/richtext-lexical'
 import { IS_BOLD, IS_CODE, IS_ITALIC, IS_STRIKETHROUGH, IS_SUBSCRIPT, IS_SUPERSCRIPT, IS_UNDERLINE, TextNode, type SerializedElementNode, type SerializedLexicalNode, type SerializedTextNode } from 'lexical'
 
 import escapeHTML from 'escape-html'
-import Link from 'next/link'
 import React, { Fragment, JSX } from 'react'
+import { list } from 'postcss'
 
-// import {
-//   IS_BOLD,
-//   IS_CODE,
-//   IS_ITALIC,
-//   IS_STRIKETHROUGH,
-//   IS_SUBSCRIPT,
-//   IS_SUPERSCRIPT,
-//   IS_UNDERLINE,
-// } from './nodeFormat'
+interface NodeData {
+  id: string
+  type: string
+  content: SerializedLexicalNode
+}
 
 interface Props {
   nodes: SerializedLexicalNode[]
@@ -35,10 +29,45 @@ interface LinkNode {
   url: string;
 }
 
+// Global collection for all nodes in the current render
+let allNodes: NodeData[] = []
+
 export function SerializeLexical({ nodes }: Props): JSX.Element {
+  // Reset nodes collection for each top-level render
+  allNodes = []
+  
+  const content = renderNodes(nodes)
+  
+  return (
+    <Fragment>
+      {/* {content} */}
+      {allNodes.length > 0 && (
+        <footer className="all-nodes-section">
+          <ul className="all-nodes-list" style={{listStyle: 'none'}}>
+            {allNodes.map((nodeData, index) => (
+              <li key={`${nodeData.type}-${index}-${Math.random()}`}>
+                {renderSingleNode(nodeData.content, index)}
+              </li>
+            ))}
+          </ul>
+        </footer>
+      )}
+    </Fragment>
+  )
+}
+
+function renderNodes(nodes: SerializedLexicalNode[]): JSX.Element {
   return (
     <Fragment>
       {nodes?.map((_node, index): JSX.Element | null => {
+        // Collect all nodes except text and link nodes
+        if (_node.type !== 'text' && _node.type !== 'linebreak' && _node.type !== 'link') {
+          allNodes.push({
+            id: `node-${index}`,
+            type: _node.type,
+            content: _node
+          })
+        }
         if (_node.type === 'text') {
           const node = _node as SerializedTextNode
           let text = (
@@ -96,9 +125,9 @@ export function SerializeLexical({ nodes }: Props): JSX.Element {
                   }
                 }
               }
-              return SerializeLexical({ nodes: node.children })
+              return renderNodes(node.children)
             } else {
-              return SerializeLexical({ nodes: node.children })
+              return renderNodes(node.children)
             }
           }
         }
@@ -173,18 +202,6 @@ export function SerializeLexical({ nodes }: Props): JSX.Element {
           }
           case 'link': {
             const node = _node as LinkNode
-            console.log('Serialized Link Node:', _node)
-            node.children.flatMap((child) => {
-                console.log('Child Node FLATA:', child)
-            })
-            node.children.map((child) => {
-                console.log('Child Node:', child)
-            })
-            // console.log('Serialized Link Node Children:', node['url'])
-
-            // const fields: LinkFields = node.fields
-            // console.log('Link Fields:', fields)
-            // console.log('Link Type:', fields.linkType)
 
             if (node.url !== undefined) {
             //   const rel = fields.newTab ? 'noopener noreferrer' : undefined
@@ -192,7 +209,7 @@ export function SerializeLexical({ nodes }: Props): JSX.Element {
               return (
                 <a
                   href={escapeHTML(node.url)}
-                  key={index}
+                  key={`${index}-${node.url}`}
                   {...(node?.target
                     ? {
                         rel: 'noopener noreferrer',
@@ -204,8 +221,17 @@ export function SerializeLexical({ nodes }: Props): JSX.Element {
                 </a>
               )
             } else {
-              return <span key={index}>Internal link coming soon</span>
+              return <span key={index}>...</span>
             }
+          }
+          case 'footnote': {
+            const node = _node as any // FootnoteNode serialized data
+            
+            return (
+              <sup key={index} className="footnote-ref">
+                {node.number}
+              </sup>
+            )
           }
 
           default:
@@ -214,4 +240,107 @@ export function SerializeLexical({ nodes }: Props): JSX.Element {
       })}
     </Fragment>
   )
+}
+
+function renderSingleNode(node: SerializedLexicalNode, index: number): JSX.Element | null {
+  if (node.type === 'text') {
+    const textNode = node as SerializedTextNode
+    let text = (
+      <span key={`${index}-${Math.random}`} dangerouslySetInnerHTML={{ __html: escapeHTML(textNode.text) }} />
+    )
+    if (textNode.format & IS_BOLD) {
+      text = <strong key={`${index}-${Math.random}`}>{text}</strong>
+    }
+    if (textNode.format & IS_ITALIC) {
+      text = <em key={`${index}-${Math.random}`}>{text}</em>
+    }
+    if (textNode.format & IS_STRIKETHROUGH) {
+      text = <span key={`${index}-${Math.random}`} style={{ textDecoration: 'line-through' }}>{text}</span>
+    }
+    if (textNode.format & IS_UNDERLINE) {
+      text = <span key={`${index}-${Math.random}`} style={{ textDecoration: 'underline' }}>{text}</span>
+    }
+    if (textNode.format & IS_CODE) {
+      text = <code key={`${index}-${Math.random}`}>{text}</code>
+    }
+    if (textNode.format & IS_SUBSCRIPT) {
+      text = <sub key={`${index}-${Math.random}`}>{text}</sub>
+    }
+    if (textNode.format & IS_SUPERSCRIPT) {
+      text = <sup key={`${index}-${Math.random}`}>{text}</sup>
+    }
+    return text
+  }
+
+  const serializedChildrenFn = (elementNode: SerializedElementNode): JSX.Element | null => {
+    if (elementNode.children == null) {
+      return null
+    }
+    return (
+      <Fragment>
+        {elementNode.children.map((child, childIndex) => renderSingleNode(child, childIndex))}
+      </Fragment>
+    )
+  }
+
+  const serializedChildren = 'children' in node ? serializedChildrenFn(node as SerializedElementNode) : null
+
+  switch (node.type) {
+    case 'paragraph': {
+      return <p>{serializedChildren}</p>
+    }
+    case 'heading': {
+      const headingNode = node as SerializedHeadingNode
+      type Heading = Extract<keyof JSX.IntrinsicElements, 'h1' | 'h2' | 'h3' | 'h4' | 'h5'>
+      const Tag = headingNode?.tag as Heading
+      return <Tag>{serializedChildren}</Tag>
+    }
+    case 'list': {
+      const listNode = node as SerializedListNode
+      type List = Extract<keyof JSX.IntrinsicElements, 'ol' | 'ul'>
+      const Tag = listNode?.tag as List
+      return <Tag className={listNode?.listType}>{serializedChildren}</Tag>
+    }
+    case 'listitem': {
+      const listItemNode = node as SerializedListItemNode
+      return <li value={listItemNode?.value}>{serializedChildren}</li>
+    }
+    case 'quote': {
+      return <blockquote>{serializedChildren}</blockquote>
+    }
+    case 'link': {
+      const linkNode = node as LinkNode
+      if (linkNode.url) {
+        return (
+          <a
+          key={`${index}-${linkNode.url}`}
+            href={escapeHTML(linkNode.url)}
+            {...(linkNode?.target ? { rel: 'noopener noreferrer', target: '_blank' } : {})}
+          >
+            {serializedChildren}
+          </a>
+        )
+      } else {
+        return <span key={'non-link'}></span>
+      }
+    }
+    case 'footnote': {
+      const footnoteNode = node as any
+      const footnoteContent = footnoteNode.json?.root?.children || null
+      return (
+        <div>
+          <sup>{footnoteNode.number}</sup>
+          {footnoteContent && (
+            <div>
+              {footnoteContent.map((child: SerializedLexicalNode, childIndex: number) => 
+                renderSingleNode(child, childIndex)
+              )}
+            </div>
+          )}
+        </div>
+      )
+    }
+    default:
+      return <span>{serializedChildren}</span>
+  }
 }

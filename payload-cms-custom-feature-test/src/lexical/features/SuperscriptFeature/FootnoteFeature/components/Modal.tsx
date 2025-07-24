@@ -35,16 +35,10 @@ const Modal: React.FC<ModalProps> = ({ isOpen, setIsOpen, children, position }) 
     >
       <div style={{top: `${position.top}px`,
         left: `${position.left}px`,}}
-        className= 'modal_containter' //"rounded-lg shadow-lg max-w-md w-full p-6 relative"
+        className= 'modal_containter'
         onClick={(e) => e.stopPropagation()}
       >
         {children}
-        {/* <button
-          className="mt-6 w-full bg-gray-800 text-white py-2 rounded hover:bg-gray-700"
-          onClick={() => setIsOpen(false)}
-        >
-          Close
-        </button> */}
       </div>
     </div>
   );

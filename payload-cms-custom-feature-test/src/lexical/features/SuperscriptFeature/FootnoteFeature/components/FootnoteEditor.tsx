@@ -1,4 +1,4 @@
-import React, { JSX, useEffect, useState } from 'react'
+import React, { JSX, useState } from 'react'
 import { LexicalComposer } from '@lexical/react/LexicalComposer'
 import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin'
 import { ContentEditable } from '@lexical/react/LexicalContentEditable'
@@ -11,9 +11,7 @@ import { HeadingNode, QuoteNode } from '@lexical/rich-text'
 import { LinkNode, AutoLinkNode } from '@lexical/link'
 import { ListNode, ListItemNode } from '@lexical/list'
 import { ToolbarPlugin } from './FootnoteToolbar'
-import { ErrorBoundaryType } from 'node_modules/@lexical/react/shared/useDecorators'
 import { $isTextNode, DOMConversionMap, DOMExportOutput, DOMExportOutputMap, EditorState, isHTMLElement, Klass, LexicalEditor, LexicalNode, ParagraphNode, SerializedEditorState, SerializedLexicalNode, TextNode } from '@payloadcms/richtext-lexical/lexical'
-import { lexicalEditor } from '@payloadcms/richtext-lexical'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin'
 
@@ -23,33 +21,8 @@ interface FootnoteEditorProps {
   handleSave: (data: SerializedEditorState<SerializedLexicalNode> | null) => void
 }
 
-const theme = {
-  text: {
-    bold: 'font-bold',
-    italic: 'italic',
-    strikethrough: 'line-through',
-  },
-  link: 'text-blue-600 underline cursor-pointer',
-}
-
 export function FootnoteEditor({ content, handleSave }: FootnoteEditorProps): JSX.Element {
-    const [editorState, setEditorState] = useState<SerializedEditorState<SerializedLexicalNode> | null>(null)
-  
-  const initialConfig = {
-    namespace: 'FootnoteEditor',
-    theme,
-    onError: (error: Error) => {
-      console.error(error)
-    },
-    nodes: [
-      HeadingNode,
-      QuoteNode,
-      LinkNode,
-      AutoLinkNode,
-      ListNode,
-      ListItemNode,
-    ],
-  }
+  const [editorState, setEditorState] = useState<SerializedEditorState<SerializedLexicalNode> | null>(null)
   const [editor] = useLexicalComposerContext()
 
   ////////
@@ -207,37 +180,10 @@ const constructImportMap = (): DOMConversionMap => {
 
 const handleSaveFromEditor = () => {
   handleSave(editorState) 
-  // const editorState = editor.getEditorState();
-  // editorState.read(() => {
-  //   const json = editorState.toJSON();
-  //   console.log('Saved JSON:', json);
-  //   handleSave(editorState)  // Call the provided handleSave function with the JSON data
-  //   // Save to DB or wherever
-  // });
 };
 
   return ( 
     <div style={{ width: '100%', height: '100%', }}>
-      {/* <LexicalComposer initialConfig={initialConfig}>
-        <ToolbarPlugin />
-        <div className="relative">
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable className="min-h-32 p-3 focus:outline-none" />
-            }
-            placeholder={
-              <div className="absolute top-3 left-3 text-gray-400 pointer-events-none">
-                Enter footnote content...
-              </div>
-            }
-            ErrorBoundary={LexicalErrorBoundary as unknown as ErrorBoundaryType}
-          />
-        </div>
-        <HistoryPlugin />
-        <LinkPlugin />
-        <ListPlugin />
-      </LexicalComposer> */}
-      
       <LexicalComposer initialConfig={editorConfig}>
       <div className="editor-container">
         <ToolbarPlugin />
@@ -262,12 +208,10 @@ const handleSaveFromEditor = () => {
         editorState.read(() => {
           const json = editorState.toJSON();
           setEditorState(json)
-          console.log('Editor state changed:', json);
-          // onChange(json);
         });
       }} />
         </div>
-        <button type='button' onClick={handleSaveFromEditor} style={{width: '100%', marginTop: '4px'}}>Save</button>
+        <button type='button' onClick={handleSaveFromEditor} style={{width: '100%', backgroundColor: '#000', marginTop: '4px', cursor: 'pointer'}}>Sumit</button>
       </div>
     </LexicalComposer>
     </div>

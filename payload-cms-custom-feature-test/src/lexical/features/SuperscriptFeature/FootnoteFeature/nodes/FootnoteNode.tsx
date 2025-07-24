@@ -2,7 +2,6 @@ import {
     $applyNodeReplacement,
     DecoratorNode,
     DOMConversionMap,
-    DOMConversionOutput,
     EditorConfig,
     LexicalNode,
     NodeKey,
@@ -141,9 +140,6 @@ import type { SerializedEditorState } from 'lexical';
             textDecoration: 'underline',
           }}
           data-footnote-id={this.__id}
-          // onMouseEnter={handleMouseEnter}
-          // onFocus={handleMouseEnter}
-          onMouseDown={handleMouseEnter}
           onClick={handleClick}
         >
           {this.__number}

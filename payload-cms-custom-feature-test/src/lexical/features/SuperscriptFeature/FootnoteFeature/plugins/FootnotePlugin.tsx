@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand } from 'lexical'
+import { $getRoot, $getSelection, $isElementNode, $isRangeSelection, COMMAND_PRIORITY_LOW, createCommand, LexicalCommand, LexicalNode } from 'lexical'
 import { JSX, useEffect, useRef } from 'react'
 import { FootnoteNode, $isFootnoteNode, $createFootnoteNode } from '../nodes/FootnoteNode'
 import { FootnoteModal } from '../components/FootnoteModal'
@@ -14,6 +14,42 @@ export const FOOTNOTE_NUMBER_COMMAND: LexicalCommand<void> = createCommand(
 export const REMOVE_FOOTNOTE_COMMAND = createCommand<FootnoteNode>('REMOVE_FOOTNOTE_COMMAND')
 
 let footnoteCounter = 0
+
+// Helper function to collect all footnotes in document order
+function $getAllFootnotes(): FootnoteNode[] {
+  const root = $getRoot();
+  const footnotes: FootnoteNode[] = [];
+  
+  function traverse(node: LexicalNode): void {
+    if ($isFootnoteNode(node)) {
+      footnotes.push(node);
+    }
+    
+    if ($isElementNode(node)) {
+      const children = node.getChildren();
+      for (const child of children) {
+        traverse(child);
+      }
+    }
+  }
+  
+  traverse(root);
+  return footnotes;
+}
+
+// Helper function to re-number all footnotes
+function $renumberFootnotes(): void {
+  const footnotes = $getAllFootnotes();
+  
+  footnotes.forEach((footnote, index) => {
+    const newNumber = index + 1;
+    const writableNode = footnote.getWritable();
+    writableNode.__number = newNumber;
+  });
+  
+  // Update the global counter to match the highest number
+  footnoteCounter = footnotes.length;
+}
 
 export function FootnotePlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext()
@@ -42,7 +78,7 @@ export function FootnotePlugin(): JSX.Element | null {
               window.dispatchEvent(new CustomEvent('openFootnoteModal', {
                 detail: {
                   footnoteNode,
-                  anchorElement: domElement, // ✅ DOM node of the new footnote
+                  anchorElement: domElement,
                 },
               }));
             } else {
@@ -86,64 +122,6 @@ export function FootnotePlugin(): JSX.Element | null {
   });
 }, [editor]);
 
-//   useEffect(() => {
-//   return editor.registerUpdateListener(({ editorState }) => {
-//     editorState.read(() => {
-//       const selection = $getSelection()
-
-//       if ($isRangeSelection(selection)) {
-//         const anchorNode = selection.anchor.getNode()
-//         let footnoteNode: FootnoteNode | null = null
-
-//         // Case 1: Cursor is directly on a FootnoteNode
-//         if ($isFootnoteNode(anchorNode)) {
-//           footnoteNode = anchorNode
-//         }
-
-//         // Case 2: Cursor is inside a TextNode sibling of a FootnoteNode
-//         if (!footnoteNode && anchorNode.getPreviousSibling()) {
-//           const prev = anchorNode.getPreviousSibling()
-//           if ($isFootnoteNode(prev)) {
-//             footnoteNode = prev
-//           }
-//         }
-
-//         // Case 3: Cursor is inside the parent that contains FootnoteNode
-//         if (!footnoteNode && anchorNode.getParent()) {
-//           const maybe = anchorNode.getParent()
-//           if ($isFootnoteNode(maybe)) {
-//             footnoteNode = maybe
-//           }
-//         }
-
-//         if (footnoteNode) {
-//           const id = footnoteNode.getId()
-//           if (id !== lastShownIdRef.current) {
-//             lastShownIdRef.current = id
-
-//             const domElement = editor.getElementByKey(footnoteNode.getKey())
-//             if (domElement) {
-//               window.dispatchEvent(
-//                 new CustomEvent('openFootnoteModal', {
-//                   detail: {
-//                     footnoteNode,
-//                     anchorElement: domElement,
-//                   },
-//                 })
-//               )
-//             }
-//           }
-//         } else {
-//           // Reset on move out of footnote
-//           lastShownIdRef.current = null
-//         }
-//       } else {
-//         lastShownIdRef.current = null
-//       }
-//     })
-//   })
-// }, [editor])
-
   useEffect(() => {
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement
@@ -184,6 +162,7 @@ export function FootnotePlugin(): JSX.Element | null {
     (nodeToRemove: FootnoteNode) => {
       editor.update(() => {
         nodeToRemove.remove();
+        $renumberFootnotes()
       })
       return true;
     },

@@ -81,6 +81,10 @@ modal_container_action_btn_2:hover {
   margin-bottom: 20px;
 }
 
+.modal_container_lexical_content a:link{
+  color: #5059f6;
+}
+
 /* */
 
 .toolbar {

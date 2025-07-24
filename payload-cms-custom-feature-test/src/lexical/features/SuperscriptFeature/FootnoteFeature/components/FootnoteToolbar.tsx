@@ -1,83 +1,3 @@
-// import React, { JSX } from 'react'
-// import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-// import { 
-//   $getSelection,
-//   $isRangeSelection,
-//   FORMAT_TEXT_COMMAND,
-//   LexicalEditor,
-// } from 'lexical'
-// import { Bold, Italic, Strikethrough, Link } from 'lucide-react'
-
-// export function ToolbarPlugin(): JSX.Element {
-//   const [editor] = useLexicalComposerContext()
-
-//   const formatText = (format: 'bold' | 'italic' | 'strikethrough') => {
-//     editor.dispatchCommand(FORMAT_TEXT_COMMAND, format)
-//   }
-
-//   return (
-//     <div className="flex gap-1 p-2 border-b bg-gray-50">
-//       <button
-//       type='button'
-//         // variant="ghost"
-//         // size="sm"
-//         onClick={() => formatText('bold')}
-//         title="Bold"
-//       >
-//         <Bold size={16} />
-//       </button>
-      
-//       <button
-//       type='button'
-//         // variant="ghost"
-//         // size="sm"
-//         onClick={() => formatText('italic')}
-//         title="Italic"
-//       >
-//         <Italic size={16} />
-//       </button>
-      
-//       <button
-//       type='button'
-//         // variant="ghost"
-//         // size="sm"
-//         onClick={() => formatText('strikethrough')}
-//         title="Strikethrough"
-//       >
-//         <Strikethrough size={16} />
-//       </button>
-      
-//       <button
-//       type='button'
-//         // variant="ghost"
-//         // size="sm"
-//         onClick={() => {
-//           const url = prompt('Enter URL:')
-//           if (url) {
-//             editor.update(() => {
-//               const selection = $getSelection()
-//               if ($isRangeSelection(selection)) {
-//                 // Add link functionality here
-//               }
-//             })
-//           }
-//         }}
-//         title="Add Link"
-//       >
-//         <Link size={16} />
-//       </button>
-//     </div>
-//   )
-// }
-
-
-/**
- * Copyright (c) Meta Platforms, Inc. and affiliates.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- *
- */
 import {useLexicalComposerContext} from '@lexical/react/LexicalComposerContext';
 import {mergeRegister} from '@lexical/utils';
 import {
@@ -86,11 +6,8 @@ import {
   CAN_REDO_COMMAND,
   CAN_UNDO_COMMAND,
   COMMAND_PRIORITY_LOW,
-  FORMAT_ELEMENT_COMMAND,
   FORMAT_TEXT_COMMAND,
-  REDO_COMMAND,
   SELECTION_CHANGE_COMMAND,
-  UNDO_COMMAND,
 } from 'lexical';
 import {useCallback, useEffect, useRef, useState} from 'react';
 import { Bold, Italic, Strikethrough, Link } from 'lucide-react'
@@ -165,9 +82,6 @@ export const ToolbarPlugin = () => {
         return editor.registerCommand(
             TOGGLE_LINK_COMMAND,
             (payload) => {
-                // const { linkTitle, linkUrl, linkType } = payload
-                // const {fields} = payload
-                console.log('Payload: ================ ', payload)
                 const { fields, text, selectedNodes } = payload!
 
                 if (fields.url && fields.url !== '') {
@@ -198,25 +112,6 @@ export const ToolbarPlugin = () => {
 
   return (
     <div className="toolbar" ref={toolbarRef}>
-      {/* <button
-        disabled={!canUndo}
-        onClick={() => {
-          editor.dispatchCommand(UNDO_COMMAND, undefined);
-        }}
-        className="toolbar-item spaced"
-        aria-label="Undo">
-        <i className="format undo" />
-      </button>
-      <button
-        disabled={!canRedo}
-        onClick={() => {
-          editor.dispatchCommand(REDO_COMMAND, undefined);
-        }}
-        className="toolbar-item"
-        aria-label="Redo">
-        <i className="format redo" />
-      </button> 
-      <Divider /> */ }
       <button
       type='button'
         onClick={() => {
@@ -246,9 +141,6 @@ export const ToolbarPlugin = () => {
       </button>
       <button
       type='button'
-        // onClick={() => {
-        //   editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'highlight');
-        // }}
           onClick={() => {
           const url = prompt('Enter URL:')
           if (url) {

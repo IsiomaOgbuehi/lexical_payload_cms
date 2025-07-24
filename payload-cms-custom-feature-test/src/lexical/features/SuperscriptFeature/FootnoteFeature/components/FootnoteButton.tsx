@@ -2,7 +2,6 @@ import React, { JSX } from 'react'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { Superscript } from 'lucide-react'
 import { FOOTNOTE_NUMBER_COMMAND } from '../plugins/FootnotePlugin'
-// import { FOOTNOTE_NUMBER_COMMAND } from '../plugins/FootnotePlugin'
 
 export function FootnoteButton(): JSX.Element {
   const [editor] = useLexicalComposerContext()
