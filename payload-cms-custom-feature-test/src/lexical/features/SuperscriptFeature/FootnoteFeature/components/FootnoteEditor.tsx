@@ -180,7 +180,7 @@ const constructImportMap = (): DOMConversionMap => {
 
 const handleSaveFromEditor = () => {
   handleSave(editorState) 
-};
+}
 
   return ( 
     <div style={{ width: '100%', height: '100%', }}>
@@ -211,7 +211,7 @@ const handleSaveFromEditor = () => {
         });
       }} />
         </div>
-        <button type='button' onClick={handleSaveFromEditor} style={{width: '100%', backgroundColor: '#000', marginTop: '4px', cursor: 'pointer'}}>Sumit</button>
+        <button type='button' onClick={handleSaveFromEditor} style={{width: '100%', backgroundColor: '#000', marginTop: '4px', cursor: 'pointer', padding: '6px'}}>Save</button>
       </div>
     </LexicalComposer>
     </div>

@@ -310,7 +310,7 @@ function renderSingleNode(node: SerializedLexicalNode, index: number): JSX.Eleme
     }
     case 'link': {
       const linkNode = node as LinkNode
-      if (linkNode.url) {
+      // if (linkNode.url) {
         return (
           <a
           key={`${index}-${linkNode.url}`}
@@ -320,9 +320,9 @@ function renderSingleNode(node: SerializedLexicalNode, index: number): JSX.Eleme
             {serializedChildren}
           </a>
         )
-      } else {
-        return <span key={'non-link'}></span>
-      }
+      // } else {
+      //   return <span key={'non-link'}></span>
+      // }
     }
     case 'footnote': {
       const footnoteNode = node as any

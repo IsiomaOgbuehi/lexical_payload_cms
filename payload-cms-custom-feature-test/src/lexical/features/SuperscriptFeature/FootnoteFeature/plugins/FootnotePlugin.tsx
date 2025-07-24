@@ -160,6 +160,7 @@ export function FootnotePlugin(): JSX.Element | null {
   return editor.registerCommand(
     REMOVE_FOOTNOTE_COMMAND,
     (nodeToRemove: FootnoteNode) => {
+      if(!nodeToRemove || !nodeToRemove.isAttached()) return true
       editor.update(() => {
         nodeToRemove.remove();
         $renumberFootnotes()
