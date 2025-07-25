@@ -6,7 +6,6 @@ import { FootnoteModal } from '../components/FootnoteModal'
 import { LinkPayload } from 'node_modules/@payloadcms/richtext-lexical/dist/features/link/client/plugins/floatingLinkEditor/types'
 import { TOGGLE_LINK_COMMAND } from 'node_modules/@payloadcms/richtext-lexical/dist/features/link/nodes/LinkNode'
 
-
 export const FOOTNOTE_NUMBER_COMMAND: LexicalCommand<void> = createCommand(
   'FOOTNOTE_NUMBER_COMMAND',
 )
@@ -53,8 +52,6 @@ function $renumberFootnotes(): void {
 
 export function FootnotePlugin(): JSX.Element | null {
   const [editor] = useLexicalComposerContext()
-  const lastShownIdRef = useRef<string | null>(null);
-
 
   useEffect(() => {
     return editor.registerCommand(
@@ -91,68 +88,6 @@ export function FootnotePlugin(): JSX.Element | null {
       },
       1
     )
-  }, [editor])
-
-  useEffect(() => {
-  return editor.registerUpdateListener(({ editorState }) => {
-    editorState.read(() => {
-      const selection = $getSelection();
-
-      if ($isRangeSelection(selection)) {
-        const nodes = selection.getNodes();
-        const footnoteNode = nodes.find(node => $isFootnoteNode(node)) as FootnoteNode | undefined;
-
-        if (footnoteNode) {
-          lastShownIdRef.current = footnoteNode.getId()
-          const domElement = editor.getElementByKey(footnoteNode.getKey());
-
-          if (domElement) {
-            window.dispatchEvent(
-              new CustomEvent('openFootnoteModal', {
-                detail: {
-                  footnoteNode,
-                  anchorElement: domElement,
-                },
-              })
-            );
-          }
-        }
-      }
-    });
-  });
-}, [editor]);
-
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      const target = event.target as HTMLElement
-      if (target.tagName === 'SUP' && target.hasAttribute('data-footnote-id')) {
-        event.preventDefault()
-        const footnoteId = target.getAttribute('data-footnote-id')
-        
-        editor.update(() => {
-          const selection = $getSelection()
-          if ($isRangeSelection(selection)) {
-            const nodes = selection.getNodes()
-            const footnoteNode = nodes.find(node => 
-              $isFootnoteNode(node) && (node as FootnoteNode).getId() === footnoteId
-            ) as FootnoteNode | undefined
-            
-            if (footnoteNode) {
-              // Open modal for editing footnote
-              window.dispatchEvent(new CustomEvent('openFootnoteModal', {
-                detail: { footnoteNode, anchorElement: target, }
-              }))
-            }
-          }
-        })
-      }
-    }
-
-    const editorElement = editor.getRootElement()
-    if (editorElement) {
-      editorElement.addEventListener('click', handleClick)
-      return () => editorElement.removeEventListener('click', handleClick)
-    }
   }, [editor])
 
   // Remove FooteNote

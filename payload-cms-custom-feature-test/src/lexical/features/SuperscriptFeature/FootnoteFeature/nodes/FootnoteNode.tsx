@@ -10,6 +10,7 @@ import {
   } from 'lexical'
 import { JSX } from 'react'
 import type { SerializedEditorState } from 'lexical';
+import { a } from 'vitest/dist/chunks/suite.d.FvehnV49.js';
 
   
   export type SerializedFootnoteNode = Spread<
@@ -27,6 +28,7 @@ import type { SerializedEditorState } from 'lexical';
     __number: number
     __content: string
     __json: SerializedEditorState | null
+      static footnote: any;
   
     static getType(): string {
       return 'footnote'
@@ -107,13 +109,14 @@ import type { SerializedEditorState } from 'lexical';
 
       const handleMouseEnter = (event: React.MouseEvent<HTMLElement>) => {
       // Fire custom event with node data and JSON
-      const customEvent = new CustomEvent('footnoteHover', {
+      const customEvent = new CustomEvent('footnoteMouseEnter', {
         detail: {
           node: this,
           json: this.__json,
           id: this.__id,
           number: this.__number,
-          content: this.__content
+          content: this.__content,
+          anchorElement: event.currentTarget
         }
       });
       window.dispatchEvent(customEvent);
@@ -127,7 +130,8 @@ import type { SerializedEditorState } from 'lexical';
           json: this.__json,
           id: this.__id,
           number: this.__number,
-          content: this.__content
+          content: this.__content,
+          anchorElement: event.currentTarget
         }
       });
       window.dispatchEvent(customEvent);
@@ -141,6 +145,7 @@ import type { SerializedEditorState } from 'lexical';
           }}
           data-footnote-id={this.__id}
           onClick={handleClick}
+          onMouseDown={handleMouseEnter}
         >
           {this.__number}
         </sup>
@@ -191,4 +196,7 @@ import type { SerializedEditorState } from 'lexical';
   export function createFootnoteNode() {
     return FootnoteNode
   }
+
+  export const $isMarkNode = (node: LexicalNode | null | undefined): node is FootnoteNode =>
+    node instanceof FootnoteNode
   

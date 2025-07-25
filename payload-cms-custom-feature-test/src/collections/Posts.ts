@@ -16,16 +16,7 @@ const Posts: CollectionConfig = {
     {
       label: '',
       name: 'content',
-      type: 'richText',
-      editor: lexicalEditor({
-        features: ({ defaultFeatures }) => [
-          ...defaultFeatures.filter(
-            (feature) => feature.key !== 'subscript' && feature.key !== 'superscript',
-          ),
-          MarkFeatureServer(),
-          SuperscriptFeature(),
-        ],
-      }),
+      type: 'richText'
     },
   ],
 }

@@ -5,20 +5,20 @@ import {
 } from '@payloadcms/richtext-lexical/client'
 import { SuperscriptButton } from './SuperscriptButton'
 import { FootnotePlugin } from './FootnoteFeature/plugins/FootnotePlugin'
-import { FootnoteNode } from './FootnoteFeature/nodes/FootnoteNode'
 import { FOOTNOTE_NUMBER_COMMAND } from './FootnoteFeature/plugins/FootnotePlugin'
+import { FootnoteNode } from './FootnoteFeature/nodes/FootnoteNode'
 
-export const SuperscriptClient = createClientFeature({
+export const FootnoteFeatureClient = createClientFeature({
   nodes: [FootnoteNode],
   plugins: [{ Component: FootnotePlugin, position: 'normal' }],
   toolbarInline: {
     groups: [
       toolbarFormatGroupWithItems([
         {
-          key: 'superscript',
+          key: 'footnote',
           ChildComponent: SuperscriptButton,
           order: 6,
-          onSelect: ({ editor, isActive }) => {
+          onSelect: ({ editor }) => {
             editor.dispatchCommand(FOOTNOTE_NUMBER_COMMAND, undefined)
           },
         },

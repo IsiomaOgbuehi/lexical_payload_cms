@@ -1,15 +1,17 @@
 import React, { useState, useEffect, JSX } from 'react'
-import { $getRoot, $getSelection, $isElementNode, $isRangeSelection, LexicalEditor, RootNode } from 'lexical'
+import { $getRoot, $isElementNode } from 'lexical'
 import { $isFootnoteNode, FootnoteNode } from '../nodes/FootnoteNode'
 import Modal from './Modal'
 import { faEdit, faClose } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { EditFootnoteModal } from './EditFootnoteModal'
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import type { LexicalNode, SerializedEditorState, SerializedLexicalNode, SerializedRootNode } from '@payloadcms/richtext-lexical/lexical'
 import { SerializeLexical } from '../../utils/serializeLexical'
 import { REMOVE_FOOTNOTE_COMMAND } from '../plugins/FootnotePlugin'
 import '../styles.css'
+import { FieldsDrawer, useEditorConfigContext, useLexicalDrawer } from '@payloadcms/richtext-lexical/client'
+import { Data, FormState } from 'payload'
+import { formatDrawerSlug, useEditDepth } from '@payloadcms/ui'
 
 
 export function FootnoteModal(): JSX.Element {
@@ -22,6 +24,13 @@ export function FootnoteModal(): JSX.Element {
 
   const [editor] = useLexicalComposerContext()
   const [editorState, setEditorState] = useState<SerializedEditorState<SerializedLexicalNode> | null>(null)
+
+  const editDepth = useEditDepth()
+    const drawerSlug = formatDrawerSlug({
+      slug: '',
+      depth: editDepth,
+    })
+    const { toggleDrawer } = useLexicalDrawer(drawerSlug)
 
  useEffect(() => {
     const handleOpenModal = (event: CustomEvent) => {
@@ -44,19 +53,27 @@ export function FootnoteModal(): JSX.Element {
           left: rect.left + window.scrollX,
         })
       }
+      toggleDrawer()
     }
+     
 
     const handleOnMouseEnter = (event: CustomEvent) => {
-      const { node, json, content } = event.detail
+      const { node, json, content, anchorElement } = event.detail
 
       setCurrentFootnote(node as FootnoteNode)
       if (json !== null) {
       setFootnoteContent(JSON.stringify(json, null, 2))
       }
       setEditorState(json)
-      console.log('Current Footnote Node:', content)
-      console.log('Footnote JSON:', json)
+      if (anchorElement instanceof HTMLElement) {
+        const rect = anchorElement.getBoundingClientRect()
+        setPosition({
+          top: rect.bottom + window.scrollY,
+          left: rect.left + window.scrollX,
+        })
+      }
       setIsOpen(true)
+      setShowEditModal(true)
     }
 
     const handleOnClick = (event: CustomEvent) => {
@@ -68,8 +85,6 @@ export function FootnoteModal(): JSX.Element {
       setFootnoteContent(JSON.stringify(json))
       }
       setEditorState(json)
-      console.log('Clicked Footnote Node:', content)
-      console.log('Footnote JSON:', json)
       setIsOpen(true)
       if (anchorElement instanceof HTMLElement) {
         const rect = anchorElement.getBoundingClientRect()
@@ -78,14 +93,18 @@ export function FootnoteModal(): JSX.Element {
           left: rect.left + window.scrollX,
         })
       }
+      setShowEditModal(true)
     }
 
     window.addEventListener('openFootnoteModal', handleOpenModal as EventListener)
     window.addEventListener('footnoteClick', handleOnClick as EventListener)
+    window.addEventListener('footnoteMouseEnter', handleOnMouseEnter as EventListener)
     
     return () => {
       window.removeEventListener('openFootnoteModal', handleOpenModal as EventListener)
       window.removeEventListener('footnoteClick', handleOnClick as EventListener)
+      window.removeEventListener('footnoteMouseEnter', handleOnMouseEnter as EventListener)
+
     }
   }, [])
 
@@ -135,20 +154,40 @@ export function FootnoteModal(): JSX.Element {
   }
 
   const disPlayTextEditor = () => {
+    toggleDrawer()
     setShowEditModal(true)
+  
   }
 
-  if(showEditModal) {
-    return <EditFootnoteModal isOpen={showEditModal} setIsOpen={setShowEditModal} footnoteContent={footnoteContent} setFootnoteContent={handleSave} />
-  }
+  const {
+      fieldProps: { schemaPath },
+    } = useEditorConfigContext() 
 
-  return (
-    <Modal isOpen={isOpen} setIsOpen={setIsOpen} position={position} >
+
+    return (
+      <>
+      {showEditModal &&  <Modal isOpen={isOpen} setIsOpen={setIsOpen} position={position} >
       <section style={{color: '#000', textOverflow: 'ellipsis'}} className="modal_container_lexical_content">
         {editorState !== null && <SerializeLexical nodes={editorState.root.children} /> }  {/**<RichTextConverter data={editorState} converters={jsxConverters} />   <div dangerouslySetInnerHTML={{ __html: htmlString }} /> **/}
       </section>
       <button type='button' onClick={disPlayTextEditor} className='modal_container_action_btn'><FontAwesomeIcon color='#000' icon={faEdit} /></button>
       <button type='button' onClick={handleClose} className='modal_container_action_btn'><FontAwesomeIcon color='#000' icon={faClose} /></button>
     </Modal>
-  )
+  }
+    <FieldsDrawer
+            className="lexical-link-edit-drawer"
+            drawerSlug={drawerSlug}
+            drawerTitle='Add/Edit Footnote'
+            data={{footnote: editorState} as Data}
+            featureKey="footnote"
+            handleDrawerSubmit={(fields: FormState, data) => {
+              editor.update(() => {
+                handleSave(data.footnote as SerializedEditorState<SerializedLexicalNode>)
+              })
+            }}
+            schemaPath={schemaPath}
+            schemaPathSuffix="fields"
+          />
+          </>
+    )
 }
